@@ -377,38 +377,6 @@ func monitorEvents(config *Config) error {
 					err = sendTelegramNotification(bot, config.TelegramChatID, &event, vLog.TxHash.Hex())
 					notificationSent = true
 				}
-
-			// case "Approval":
-			// 	// Parse Approval event - manually parse since it's a standard ERC20 event
-			// 	var event ApprovalEvent
-
-			// 	// Try to parse manually
-			// 	parseSuccess := false
-			// 	if len(vLog.Topics) > 2 && len(vLog.Data) >= 32 {
-			// 		event.Owner = common.HexToAddress(vLog.Topics[1].Hex())
-			// 		event.Spender = common.HexToAddress(vLog.Topics[2].Hex())
-			// 		event.Value = new(big.Int).SetBytes(vLog.Data[:32])
-			// 		event.PoolAddress = vLog.Address
-			// 		event.TokenName = tokenName
-			// 		parseSuccess = true
-			// 	}
-
-			// 	if parseSuccess {
-			// 		// Send Telegram notification
-			// 		err = sendApprovalNotification(bot, config.TelegramChatID, &event, vLog.TxHash.Hex())
-			// 		notificationSent = true
-			// 	} else {
-			// 		log.Printf("❌ Failed to parse Approval event manually")
-			// 		// Send unparsed notification
-			// 		err = sendUnparsedEventNotification(bot, config.TelegramChatID, eventType, tokenName, vLog.Address, vLog.TxHash.Hex(), vLog.Data)
-			// 		notificationSent = true
-			// 	}
-
-			default:
-				log.Printf("❌ Unknown event type: %s", eventType)
-				// Still send notification for unknown events
-				err = sendUnparsedEventNotification(bot, config.TelegramChatID, fmt.Sprintf("Unknown-%s", eventType), tokenName, vLog.Address, vLog.TxHash.Hex(), vLog.Data)
-				notificationSent = true
 			}
 
 			// Always report the result
