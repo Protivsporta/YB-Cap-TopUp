@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  cap-monitor:
+    build: .
+    restart: unless-stopped
+    environment:
+      - INFURA_WS_URL=${INFURA_WS_URL}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      - POOL_ADDRESSES=${POOL_ADDRESSES:-0x6095a220C5567360d459462A25b1AD5aEAD45204,0x2B513eBe7070Cff91cf699a0BFe5075020C732FF,0xD6a1147666f6E4d7161caf436d9923D44d901112}
+    volumes:
+      - ./.env:/root/.env:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
