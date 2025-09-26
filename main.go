@@ -26,6 +26,7 @@ type AllocateStablecoinsEvent struct {
 	StablecoinAllocated  *big.Int
 	PoolAddress          common.Address // Added to identify which pool
 	TokenName            string         // Added to identify token name
+	YBURL                string         // Added to include YieldBasis interface URL
 }
 
 type ApprovalEvent struct {
@@ -39,6 +40,7 @@ type ApprovalEvent struct {
 type PoolInfo struct {
 	Address   common.Address
 	TokenName string
+	YBURL     string
 }
 
 type Config struct {
@@ -85,6 +87,13 @@ func loadConfig() (*Config, error) {
 		"0xd6a1147666f6e4d7161caf436d9923d44d901112": "CBBTC",
 	}
 
+	// Define YieldBasis interface URLs for each pool
+	poolYBURLMap := map[string]string{
+		"0xa5bfb61af14afe7b81cac7fa4f7c4483dedc36df": "https://yieldbasis.com/market/0x6095a220C5567360d459462A25b1AD5aEAD45204",
+		"0x2b513ebe7070cff91cf699a0bfe5075020c732ff": "https://yieldbasis.com/market/0x2B513eBe7070Cff91cf699a0BFe5075020C732FF",
+		"0xd6a1147666f6e4d7161caf436d9923d44d901112": "https://yieldbasis.com/market/0xD6a1147666f6E4d7161caf436d9923D44d901112",
+	}
+
 	// Parse addresses and create pool info
 	addressList := strings.Split(poolAddresses, ",")
 	for _, addr := range addressList {
@@ -98,9 +107,15 @@ func loadConfig() (*Config, error) {
 			tokenName = "UNKNOWN"
 		}
 
+		ybURL := poolYBURLMap[strings.ToLower(addr)]
+		if ybURL == "" {
+			ybURL = "https://yieldbasis.com"
+		}
+
 		config.Pools = append(config.Pools, PoolInfo{
 			Address:   common.HexToAddress(addr),
 			TokenName: tokenName,
+			YBURL:     ybURL,
 		})
 	}
 
@@ -143,23 +158,23 @@ func sendTelegramNotification(bot *tgbotapi.BotAPI, chatID string, event *Alloca
 	}
 
 	message := fmt.Sprintf(`🚀 *YieldBasis %s Pool Cap Update*
+	
+*YieldBasis Interface*: [View %s Pool](%s)
 
 *Pool*: %s Pool
 *Event*: AllocateStablecoins
-*Address*: %s
 
 *Allocation*: %.2f stablecoins
 *Allocated*: %.2f stablecoins
 *Change*: %s
 
-*Allocator*: %s
 *Transaction*: [View on Etherscan](https://etherscan.io/tx/%s)
 
 *New %s deposit capacity available!*`,
 		event.TokenName,
-		event.TokenName, event.PoolAddress.Hex()[:10]+"...",
+		event.TokenName, event.YBURL,
+		event.TokenName,
 		allocation, allocated, changeText,
-		event.Allocator.Hex(),
 		txHash,
 		event.TokenName)
 
@@ -276,13 +291,15 @@ func monitorEvents(config *Config) error {
 
 	log.Printf("Telegram bot initialized: %s", bot.Self.UserName)
 
-	// Create address to token mapping for quick lookup
+	// Create address to token and URL mapping for quick lookup
 	addressToToken := make(map[common.Address]string)
+	addressToYBURL := make(map[common.Address]string)
 	var contractAddresses []common.Address
 
 	for _, pool := range config.Pools {
 		contractAddresses = append(contractAddresses, pool.Address)
 		addressToToken[pool.Address] = pool.TokenName
+		addressToYBURL[pool.Address] = pool.YBURL
 		log.Printf("🔍 Monitoring %s pool: %s", pool.TokenName, pool.Address.Hex())
 	}
 
@@ -318,6 +335,7 @@ func monitorEvents(config *Config) error {
 		case vLog := <-logs:
 			// Identify which pool this event came from
 			tokenName := addressToToken[vLog.Address]
+			ybURL := addressToYBURL[vLog.Address]
 			eventType := ""
 
 			// Determine event type by topic hash
@@ -353,6 +371,7 @@ func monitorEvents(config *Config) error {
 					// Add pool identification info
 					event.PoolAddress = vLog.Address
 					event.TokenName = tokenName
+					event.YBURL = ybURL
 
 					// Send Telegram notification
 					err = sendTelegramNotification(bot, config.TelegramChatID, &event, vLog.TxHash.Hex())
