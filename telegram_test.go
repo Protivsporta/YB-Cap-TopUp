@@ -86,25 +86,6 @@ func getTestTxHashes() []string {
 	}
 }
 
-func getTestApprovalEvents() []ApprovalEvent {
-	return []ApprovalEvent{
-		{
-			Owner:       common.HexToAddress("0x1234567890123456789012345678901234567890"),
-			Spender:     common.HexToAddress("0xabcdefabcdefabcdefabcdefabcdefabcdefabcd"),
-			Value:       createTestBigInt("1000000000000000000000"), // 1,000 * 1e18
-			PoolAddress: common.HexToAddress("0x6095a220C5567360d459462A25b1AD5aEAD45204"),
-			TokenName:   "WBTC",
-		},
-		{
-			Owner:       common.HexToAddress("0x9876543210987654321098765432109876543210"),
-			Spender:     common.HexToAddress("0x1111222233334444555566667777888899990000"),
-			Value:       createTestBigInt("5000000000000000000000"), // 5,000 * 1e18
-			PoolAddress: common.HexToAddress("0x2B513eBe7070Cff91cf699a0BFe5075020C732FF"),
-			TokenName:   "TBTC",
-		},
-	}
-}
-
 func TestTelegramNotifications(t *testing.T) {
 	bot, chatID := setupTelegramBot(t)
 	testEvents := getTestEvents()

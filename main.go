@@ -194,47 +194,6 @@ func sendTelegramNotification(bot *tgbotapi.BotAPI, chatID string, event *Alloca
 	return err
 }
 
-func sendApprovalNotification(bot *tgbotapi.BotAPI, chatID string, event *ApprovalEvent, txHash string) error {
-	// Format approval value in a readable way (assuming 18 decimals)
-	value := new(big.Float).Quo(new(big.Float).SetInt(event.Value), big.NewFloat(1e18))
-
-	message := fmt.Sprintf(`🚀 *YieldBasis %s Pool Approval*
-
-*Pool*: %s Pool
-*Event*: Approval
-*Address*: %s
-
-*Owner*: %s
-*Spender*: %s
-*Value*: %.2f tokens
-
-*Transaction*: [View on Etherscan](https://etherscan.io/tx/%s)
-
-*New %s spending approval granted!*`,
-		event.TokenName,
-		event.TokenName, event.PoolAddress.Hex()[:10]+"...",
-		event.Owner.Hex(),
-		event.Spender.Hex(),
-		value,
-		txHash,
-		event.TokenName)
-
-	msg := tgbotapi.NewMessageToChannel("@"+chatID, message)
-	msg.ParseMode = "Markdown"
-	msg.DisableWebPagePreview = true
-
-	// If chatID is not a channel, treat it as a regular chat ID
-	if !strings.HasPrefix(chatID, "@") {
-		// Parse chat ID as int64
-		if chatIDInt, err := strconv.ParseInt(chatID, 10, 64); err == nil {
-			msg.ChatID = chatIDInt
-		}
-	}
-
-	_, err := bot.Send(msg)
-	return err
-}
-
 func sendUnparsedEventNotification(bot *tgbotapi.BotAPI, chatID string, eventType string, tokenName string, poolAddress common.Address, txHash string, rawData []byte) error {
 	message := fmt.Sprintf(`🚀 *YieldBasis %s Pool Event Detected*
 
@@ -302,6 +261,8 @@ func monitorEvents(config *Config) error {
 		addressToYBURL[pool.Address] = pool.YBURL
 		log.Printf("🔍 Monitoring %s pool: %s", pool.TokenName, pool.Address.Hex())
 	}
+
+	log.Println("This version of Cap-Monitor monitors only AllocateStablecoins event")
 
 	// Get the event signature hashes
 	allocateSignature := []byte("AllocateStablecoins(address,uint256,uint256)")
