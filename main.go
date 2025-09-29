@@ -307,13 +307,10 @@ func monitorEvents(config *Config) error {
 	allocateSignature := []byte("AllocateStablecoins(address,uint256,uint256)")
 	allocateHash := crypto.Keccak256Hash(allocateSignature)
 
-	approvalSignature := []byte("Approval(address,address,uint256)")
-	approvalHash := crypto.Keccak256Hash(approvalSignature)
-
 	// Create filter for both AllocateStablecoins and Approval events on all pools
 	query := ethereum.FilterQuery{
 		Addresses: contractAddresses,
-		Topics:    [][]common.Hash{{allocateHash, approvalHash}},
+		Topics:    [][]common.Hash{{allocateHash}},
 	}
 
 	// Subscribe to logs
@@ -342,8 +339,6 @@ func monitorEvents(config *Config) error {
 			if len(vLog.Topics) > 0 {
 				if vLog.Topics[0] == allocateHash {
 					eventType = "AllocateStablecoins"
-				} else if vLog.Topics[0] == approvalHash {
-					eventType = "Approval"
 				}
 			}
 
@@ -377,6 +372,7 @@ func monitorEvents(config *Config) error {
 					err = sendTelegramNotification(bot, config.TelegramChatID, &event, vLog.TxHash.Hex())
 					notificationSent = true
 				}
+
 			}
 
 			// Always report the result

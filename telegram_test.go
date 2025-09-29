@@ -152,32 +152,6 @@ func TestTelegramChannelVsChatID(t *testing.T) {
 	})
 }
 
-func TestApprovalNotifications(t *testing.T) {
-	bot, chatID := setupTelegramBot(t)
-	testApprovalEvents := getTestApprovalEvents()
-	testTxHashes := getTestTxHashes()
-
-	t.Run("SendApprovalNotifications", func(t *testing.T) {
-		for i, event := range testApprovalEvents {
-			t.Run(fmt.Sprintf("%sApproval", event.TokenName), func(t *testing.T) {
-				t.Logf("📤 Sending approval notification for %s pool...", event.TokenName)
-
-				err := sendApprovalNotification(bot, chatID, &event, testTxHashes[i])
-				assert.NoError(t, err, "Failed to send %s approval notification", event.TokenName)
-
-				t.Logf("✅ %s approval notification sent successfully!", event.TokenName)
-
-				// Small delay between messages to avoid rate limiting
-				if i < len(testApprovalEvents)-1 {
-					time.Sleep(1 * time.Second)
-				}
-			})
-		}
-	})
-
-	t.Log("🎉 Approval notification tests completed!")
-}
-
 func TestMessageContentValidation(t *testing.T) {
 	testEvents := getTestEvents()
 
